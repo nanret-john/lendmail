@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LendMail
 
-## Getting Started
+LendMail turns Gemini meeting notes into polished, client-ready Gmail drafts while keeping a human in control of sending.
 
-First, run the development server:
+This repository currently contains the interactive hackathon onboarding prototype. Google sign-in, Gmail connection, meeting processing, and dashboard data are deliberately simulated behind `src/lib/demo-service.ts`. Production integrations begin after the first demo and follow `docs/IMPLEMENTATION_PLAN.md`.
+
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+```
 
-## Learn More
+## Deploy to Render
 
-To learn more about Next.js, take a look at the following resources:
+This demo is configured as a Render Static Site through `render.yaml`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Push this repository to GitHub or GitLab.
+2. In Render, select **New → Blueprint**.
+3. Connect the repository and allow Render to read `render.yaml`.
+4. Review the `lendmail-demo` service and select **Apply**.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Render will run `npm ci && npm run build` and publish the generated `out` directory. Commits to the connected default branch deploy automatically.
 
-## Deploy on Vercel
+No environment variables are required for the prototype. When real OAuth or server-side integrations are introduced, remove the static export configuration and deploy the application as a Render Web Service instead.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Documentation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `docs/PRODUCT_BRIEF.md` — original product and engineering brief.
+- `docs/IMPLEMENTATION_PLAN.md` — complete production implementation plan.
+- `docs/DEMO_PLAN.md` — Friday demo scope, script, and definition of done.
