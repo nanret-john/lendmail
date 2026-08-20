@@ -1,8 +1,8 @@
 # LendMail
 
-LendMail turns Gemini meeting notes into polished, client-ready Gmail drafts while keeping a human in control of sending.
+LendMail turns Gemini meeting notes into polished, client-ready Gmail drafts, tracks commitments across recurring conversations, and surfaces verified cross-client product signals while keeping humans in control of sending and product decisions.
 
-This repository currently contains the interactive hackathon onboarding prototype. Google sign-in, Gmail connection, meeting processing, and dashboard data are deliberately simulated behind `src/lib/demo-service.ts`. Production integrations begin after the first demo and follow `docs/IMPLEMENTATION_PLAN.md`.
+This repository currently contains the interactive hackathon prototype. Google sign-in, Gmail connection, meeting processing, commitment tracking, continuity reports, Voice of Customer signals, and Product Opportunities are deliberately simulated. Production integrations begin after the first demo and follow `docs/IMPLEMENTATION_PLAN.md`.
 
 ## Run locally
 

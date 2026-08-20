@@ -2,19 +2,22 @@
 
 ## Summary
 
-LendMail will turn a Gemini meeting-notes notification into a reviewed, client-ready Gmail draft. For each connected Lendsqr user, the system will detect eligible Gemini notifications, retrieve the linked Google Doc, resolve the client and note style, extract a structured note with an LLM, validate it, and create a draft in the meeting organizer's mailbox.
+LendMail will turn a Gemini meeting-notes notification into a reviewed, client-ready Gmail draft and an accountable set of meeting commitments. For each connected Lendsqr user, the system will detect eligible Gemini notifications, retrieve the linked Google Doc, resolve the client and note style, extract a structured note and evidence-backed commitments with an LLM, validate them, create a draft in the meeting organizer's mailbox, and prepare human-reviewed follow-ups when commitments need attention.
 
 The system will not send email, alter Gemini's note generation, or give administrators default access to mailbox or transcript content. This is a new project, so the repository layout and application framework named below are proposed boundaries to confirm during foundation work rather than existing code.
 
 ## Product Outcome
 
-Reduce the manual work after a client meeting from 15–30 minutes to a short review while improving timeliness and consistency. The human attendee remains responsible for checking and sending every note.
+Reduce the manual work after a client meeting from 15–30 minutes to a short review while improving timeliness, consistency, and follow-through. The human attendee remains responsible for checking and sending every note or follow-up.
 
 Initial success means:
 
 - a Gemini note for a connected organizer becomes one pipeline item within a few minutes;
 - a clear client and approved style produce a structurally valid note;
 - a correctly addressed Gmail draft appears in the organizer's mailbox;
+- transcript-supported commitments retain their owner, due date, party, and source meeting, while missing details are visibly flagged rather than inferred;
+- users can see overdue, client-owned, internal, and ambiguous commitments and prepare a follow-up draft without automatic sending;
+- aggregate reports show time saved, completion, overdue work, and operational patterns without exposing source transcripts;
 - ambiguous, invalid, or unauthorized work stops in a visible recoverable state;
 - no application path can send the draft.
 
@@ -31,6 +34,11 @@ Initial success means:
 - Structured LLM extraction and schema validation.
 - HTML and plain-text note rendering.
 - Gmail draft creation in the organizer's mailbox.
+- Evidence-backed decision and commitment extraction with explicit missing-owner and missing-deadline states.
+- Commitment status tracking, attention queues, and human-reviewed follow-up draft preparation.
+- User and leadership reports covering time saved, completion, overdue work, client dependencies, and clearly labelled AI-generated operational insights.
+- Recurring-meeting continuity reports that connect a confirmed meeting series across weeks or months, show discussion and decision changes, reconcile completed and outstanding commitments, and prepare the next meeting.
+- Human-verified Voice of Customer reporting that extracts product signals, clusters recurring feedback across distinct clients, and turns an approved signal cluster into a Product Opportunity with a human-controlled lifecycle.
 - User meeting-status views and administrator configuration queues.
 - Retries, audit events, operational alerts, and controlled rollout.
 
@@ -42,6 +50,9 @@ Initial success means:
 - Reading unrelated mailbox content.
 - Administrators browsing raw mail or transcripts by default.
 - Guessing a client, recipient, fact, owner, or deadline when evidence is unclear.
+- Automatically changing commitment status from unverified external activity.
+- Automatically sending reminders or follow-ups.
+- Automatically creating roadmap work, prioritizing features, or publishing unverified product signals to external issue trackers.
 
 ## Use Cases
 
@@ -54,6 +65,13 @@ Initial success means:
 | System | Extract and validate a note | Transcript-supported structured fields are produced; unsupported values remain empty. |
 | System | Create a draft | A validated, rendered note becomes a Gmail draft in the organizer's mailbox and is never sent. |
 | User | Monitor own meetings | The user sees current status, safe failure detail, and available recovery action. |
+| User | Track meeting commitments | The user sees owned, client-owned, overdue, complete, and ambiguous commitments with links to their source meetings. |
+| User | Prepare a follow-up | The system drafts a reminder from verified commitment data; the user reviews and sends it manually. |
+| User or leader | Review operational reports | The viewer sees permission-scoped trends, overdue work, client dependencies, time saved, and labelled AI-generated insights. |
+| User | Review a recurring meeting series | Confirmed related meetings become a weekly or monthly continuity report showing progress, changed decisions, unresolved work, and recommended next-meeting topics. |
+| Client-facing user | Verify a product signal | A transcript-supported feature request, friction point, bug, competitor mention, confusion signal, or churn indicator is accepted, corrected, rejected, or restricted before aggregation. |
+| Product user | Review Voice of Customer | Verified signals are clustered across distinct clients with frequency, impact, recurrence, evidence, commitments, and existing Product Opportunity status. |
+| Product user | Create a Product Opportunity | A reviewed signal cluster becomes a structured opportunity whose status is controlled by authorized humans and can be referenced in future meeting briefs. |
 | User | Manage personal style | The user chooses an approved style, uploads a sample, and confirms a distilled style before use. |
 | Admin | Manage clients and global styles | The admin maintains domain mappings, client context, and approved organization styles. |
 | Admin | Resolve ambiguous meetings | The admin assigns a client without receiving default access to transcript or mailbox content. |
@@ -69,7 +87,15 @@ Initial success means:
 7. The transcript, client context, and exact style version are sent once to the configured model for structured extraction.
 8. Server-side validation accepts the result or moves the item to a visible failure state.
 9. Validated output is rendered to HTML and plain text and saved as a Gmail draft in the organizer's mailbox.
-10. The organizer reviews and manually sends the draft in Gmail.
+10. Validated commitments are persisted with evidence, owner, party, due date, confidence/ambiguity state, and source meeting; unsupported owner or date values remain unset and require confirmation.
+11. A scheduled evaluator marks due and overdue attention states from verified dates, without inventing progress or reading unrelated activity.
+12. When requested, the system prepares an idempotent follow-up Gmail draft from the commitment record; the user reviews and manually sends it.
+13. Permission-scoped reports aggregate commitment outcomes and may present clearly labelled model-generated insights grounded in report metrics.
+14. Recurring meetings are grouped by verified recurrence metadata where available, otherwise by a confidence-scored client/title/participant/time match that requires human confirmation before consolidation.
+15. A continuity report preserves per-meeting provenance for every discussion, decision change, completion, and open commitment, and can produce a preparation brief for the next occurrence.
+16. A secondary extraction returns candidate product signals separately from the client note; each candidate records its category, explicit-versus-inferred basis, product area, minimal evidence, confidence, source meeting, and verification state.
+17. Only verified signals contribute to cross-client clusters. Clustering counts distinct clients separately from repeated mentions and exposes similarity/confidence for human merge or split decisions.
+18. An authorized Product user may create a Product Opportunity from a verified cluster, update its lifecycle from New through Resolved, and surface the current status in relevant next-meeting briefs.
 
 ## Codebase Responsibilities
 
@@ -82,6 +108,8 @@ Because no project repository exists yet, use one repository with independently 
 | Capture worker | Per-user Gmail polling, source claiming, linked-document retrieval, and capture checkpointing. |
 | Processing worker | Extraction, validation, rendering, Gmail draft creation, and bounded retries. |
 | PostgreSQL | Users, encrypted credential references, meetings, source identities, clients, styles, extraction results, attempts, and audit events. |
+| Commitment service | Commitment validation, ownership and due-date ambiguity, status transitions, attention evaluation, and follow-up eligibility. |
+| Reporting service | Permission-scoped metric aggregation and evidence-linked operational insights without transcript exposure. |
 | Secrets/KMS service | Google client secret, LLM credentials, token-encryption keys, and key rotation. |
 | Observability | Structured logs, metrics, alerts, traces, and redaction controls. |
 
@@ -109,6 +137,15 @@ All entries are **new** because this is a greenfield project. Names describe the
 | Resolve style | `new StyleResolver.resolve` | Select an active version by meeting override → client default → user default → organization default and persist the chosen version on the meeting. |
 | Extract note | `new NoteExtractor.extract`, `new ModelProvider` | Send the normalized transcript, minimal client context, and resolved style schema in one call; require schema-constrained output and instruct the model not to infer unsupported facts. |
 | Validate extraction | `new ExtractionValidator.validate` | Validate types, required keys, conditional sections, source-supported constraints, size limits, and policy rules before the result can be rendered. |
+| Persist commitments | `new CommitmentService`, `new Commitment`, `new CommitmentEvidence` | Persist only validated decisions and action items with their source meeting, evidence reference, owner/party, due date, lifecycle state, and explicit ambiguity flags; never infer missing owners or deadlines. |
+| Track attention | `new CommitmentAttentionJob`, `new CommitmentStatusPolicy` | Derive due-soon and overdue attention from verified dates, allow authorized human status updates, and never claim completion from unverified external activity. |
+| Prepare follow-up | `new FollowUpDraftService`, `new FollowUpDraft` | Render a reminder from verified commitment data, require recipient resolution and human review, create a Gmail draft idempotently, and expose no send operation. |
+| Report outcomes | `new ReportingService`, `new ReportsPage`, `new InsightGenerator` | Aggregate permission-scoped time-saved and commitment metrics; ground insights in stored aggregates, label AI-generated interpretations, and provide traceable metric evidence. |
+| Build continuity reports | `new MeetingSeriesService`, `new ContinuityReportService`, `new MeetingSeriesReview` | Group recurring meetings using verified recurrence identity or reviewable matching signals, preserve source-meeting provenance, compare decisions and commitments over time, and generate weekly/monthly roll-ups plus next-meeting briefs. |
+| Extract product signals | `new ProductSignalExtractor`, `new ProductSignalValidator`, `new ProductSignalReview` | Extract bounded signal categories separately from note generation, retain minimal source evidence, distinguish explicit statements from inference, and require correction/approval/rejection before aggregation. |
+| Cluster client voice | `new ProductSignalClusterService`, `new VoiceOfCustomerReport` | Group semantically related verified signals, count distinct clients and mentions independently, weight impact transparently, surface merge confidence, and support audited human merge/split decisions. |
+| Manage opportunities | `new ProductOpportunityService`, `new ProductOpportunity`, product workflow UI | Create an opportunity only through an authorized reviewed action, preserve linked signals/evidence/commitments, enforce the New → Investigating → Planned → In progress → Resolved lifecycle, and feed status into authorized meeting briefs. |
+| Export opportunity | `new IssueTrackerExportService`, provider adapters | In a later approved phase, preview and explicitly export a verified opportunity to Jira, Linear, GitHub Issues, or Trello; reconcile external identity to avoid duplicates and never publish automatically. |
 | Render note | `new NoteRenderer.renderHtml`, `new NoteRenderer.renderText` | Render only validated structured data with escaped values and deterministic templates; do not render model-supplied HTML. |
 | Resolve recipients | `new RecipientResolver.resolve` | Apply the approved To/Cc policy from verified meeting metadata and client contacts; pause for review when organizer or external recipients are uncertain. |
 | Create Gmail draft | `new GmailDraftService.create`, `new DraftRecord` | Build a MIME message with HTML and plain-text parts, create—not send—it with the organizer's token, and persist the Gmail draft ID under an idempotency guard. |
@@ -208,6 +245,17 @@ PostgreSQL is the source of truth for application state. Create migrations throu
 | `meeting_style_overrides` | Audited meeting-specific selection where an override exists. |
 | `processing_attempts` | Stage, lease, attempt number, next retry, error classification, and diagnostic reference. |
 | `drafts` | Meeting, Gmail draft/message identifiers, operation marker, recipient snapshot, and creation time. One active draft per meeting unless replacement is explicitly supported. |
+| `commitments` | Source meeting/extraction, description, owner/party, verified due date, lifecycle and attention state, ambiguity flags, and timestamps. Never require guessed owner or date values. |
+| `commitment_evidence` | Minimal source references or approved excerpts supporting each extracted commitment, separated for stricter access and retention. |
+| `follow_up_drafts` | Commitment set, Gmail draft identifier, operation marker, recipient snapshot, and creation time for idempotent human-reviewed reminders. |
+| `meeting_series` | Confirmed recurring-series identity, client, normalized title, cadence, participants, ownership, and reporting settings. |
+| `meeting_series_members` | Series-to-meeting membership, matching signals/confidence, confirmation actor, and timestamps; unique membership per meeting. |
+| `continuity_reports` | Series, reporting period, immutable source-meeting snapshot, generated sections, model/template versions, approval state, and timestamps. |
+| `product_signals` | Source meeting, category, product area, normalized statement, explicit/inferred basis, confidence, verification state/actor, client, minimal evidence reference, and timestamps. |
+| `product_signal_clusters` | Canonical problem/request, lifecycle, transparent impact aggregates, first/latest mention, merge confidence, and review metadata. |
+| `product_signal_cluster_members` | Cluster-to-signal membership, similarity evidence, human confirmation, and timestamps; unique active membership per signal. |
+| `product_opportunities` | Verified cluster, problem statement, affected-client/meeting snapshots, suggested validation step, human-controlled status, owner, and timestamps. |
+| `product_opportunity_links` | Opportunity-to-commitment and optional external issue identity, provider, export actor, and reconciliation state. |
 | `audit_events` | Actor, action, target type/id, redacted metadata, and timestamp; append-only to the extent supported. |
 
 Add indexes for worker scans on connection/status/checkpoint, meetings on status/next retry/owner/date, unresolved client items, and audit target/time. Keep content columns out of common list queries. No production backfill is expected for the first release; seed only approved organization defaults, known clients/domains, and hand-authored style versions through auditable migrations or an authorized admin import.
@@ -235,6 +283,9 @@ Add indexes for worker scans on connection/status/checkpoint, meetings on status
 2. **Global style library:** create/version/preview/approve/deactivate organization styles without mutating historical versions.
 3. **Resolution queue:** show age and safe metadata for `needs_client`, allow client assignment, and record resolution reason.
 4. **Operations summary:** aggregate connection and pipeline health only; no raw mailbox, transcript, or extracted-note content by default.
+5. **Commitment reports:** permission-scoped completion, overdue, ownership, client-dependency, and time-saved trends with clearly labelled AI-generated insights and links to supporting aggregates.
+6. **Continuity reports:** a recurring-series timeline, weekly/monthly roll-up, changed decisions, completed and outstanding commitments, source links, and a next-meeting preparation brief; uncertain series membership requires confirmation.
+7. **Voice of Customer:** verified cross-client product-signal clusters, distinct-client and mention counts, approved evidence excerpts, related commitments, merge/split review, and Product Opportunity creation/status without default transcript access.
 
 ## Backend Implementation
 
@@ -276,7 +327,8 @@ Keep Google and model SDK calls behind narrow interfaces with contract tests. No
 | 5. Extraction and validation | Model adapter, structured extraction, prompt-injection boundaries, validation, attempt tracking, and failure states. | Representative real transcripts validate; missing facts remain empty; malformed/adversarial inputs cannot reach drafting. |
 | 6. Safe draft creation | Recipient policy implementation, deterministic renderers, MIME builder, Gmail draft adapter, and draft idempotency. | One real meeting reaches one correctly addressed, review-ready draft; retry creates no duplicate; automated tests prove no send operation exists. |
 | 7. Complete portal | User meetings/status/recovery and admin configuration/triage/health views. | Users see only their records; admins complete client/style workflows without database access or default content visibility. |
-| 8. Hardening and pilot | Retry tuning, reconciliation, retention jobs, alerts, runbooks, security/privacy review, load tests, and controlled pilot. | Revoked access, rate limits, provider timeouts, malformed docs, duplicate notifications, and queue backlog produce visible and recoverable outcomes within agreed targets. |
+| 8. Commitment tracker, continuity, and reports | Validated commitment persistence, ambiguity review, attention evaluation, follow-up drafts, user queues, recurring-series resolution, continuity roll-ups, product-signal verification, Voice of Customer clustering, Product Opportunities, aggregate reports, and grounded insights. | Missing owners/dates remain unresolved, verified overdue work is visible, uncertain meeting-series and signal-cluster matches require confirmation, unverified signals are excluded, one follow-up request creates exactly one unsent draft, and reports reconcile to source meetings, commitments, and verified signals. |
+| 9. Hardening and pilot | Retry tuning, reconciliation, retention jobs, alerts, runbooks, security/privacy review, load tests, and controlled pilot. | Revoked access, rate limits, provider timeouts, malformed docs, duplicate notifications, follow-up retries, and queue backlog produce visible and recoverable outcomes within agreed targets. |
 
 Work on portal screens may proceed in parallel once API contracts and authorization rules for the relevant phase are stable. Do not postpone connection UI to Phase 7; the Phase 1 connection experience is required for testing every later phase.
 
@@ -287,6 +339,14 @@ Work on portal screens may proceed in parallel once API contracts and authorizat
 - Do not use one user's Google credential to read another user's mailbox or create another user's draft.
 - Do not proceed when organizer, client, style, or recipients are ambiguous.
 - Do not invent decisions, owners, deadlines, attendees, links, or client context.
+- Do not mark a commitment complete or assign responsibility without an authorized human action or an approved, verifiable source.
+- Do not send commitment reminders or follow-ups automatically.
+- Do not present model-generated operational interpretations as measured facts; label them and link them to supporting aggregates.
+- Do not merge meetings into a recurring series solely from a model guess; require verified recurrence identity or human confirmation of uncertain matches.
+- Do not hide decision changes or overwrite earlier outcomes when producing a continuity report.
+- Do not include unverified signals in Voice of Customer counts or expose full transcripts as Product evidence by default.
+- Do not let frequency, client tier, model confidence, or an AI-generated score decide roadmap priority.
+- Do not create, export, or update Product Opportunities or external issues without an authorized human action.
 - Do not make an unapproved distilled style selectable.
 - Do not allow an administrator to view raw mail, transcripts, or extracted content by default.
 - Do not log credentials, source content, full prompts/responses, or sensitive recipient data.
@@ -306,6 +366,10 @@ Work on portal screens may proceed in parallel once API contracts and authorizat
 - State-transition permissions, retry classification, and lease expiry.
 - Transcript normalization, structured-output validation, and deterministic rendering/escaping.
 - Recipient policy and prohibition of draft creation on ambiguity.
+- Commitment evidence, missing owner/date behavior, due-state calculation, and authorized status transitions.
+- Report aggregation, permission scoping, insight grounding, and AI-generated labels.
+- Meeting-series matching confidence, human confirmation, chronological comparison, and source provenance.
+- Product-signal category/basis validation, verification permissions, distinct-client counting, clustering merge/split behavior, and Product Opportunity transitions.
 
 ### Integration tests
 
@@ -314,6 +378,8 @@ Work on portal screens may proceed in parallel once API contracts and authorizat
 - Google Doc retrieval for supported content, missing access, deletion, large documents, and malformed links.
 - Model structured-output success, timeout, rate limit, invalid schema, oversized input, and adversarial source text.
 - Gmail MIME draft creation, uncertain response reconciliation, and duplicate prevention.
+- Follow-up draft idempotency and prohibition of automatic sending.
+- Report totals reconciled against commitment records and protected from cross-user leakage.
 - Revoked token detection and reconnection recovery.
 - API authorization proving user isolation and admin content restrictions.
 
@@ -331,6 +397,14 @@ Work on portal screens may proceed in parallel once API contracts and authorizat
 10. A changed Gemini notification format triggers a visible capture failure/alert.
 11. Users cannot access another user's meeting; admins cannot retrieve protected content through list/detail APIs.
 12. No test or production adapter path can invoke Gmail send.
+13. A commitment with no owner or due date remains visibly unresolved and is never silently completed.
+14. Advancing time moves a verified past-due commitment into attention without changing its completion state.
+15. Repeated follow-up requests create one draft, and reports reconcile to the underlying permission-scoped commitments.
+16. Four confirmed recurring meetings produce a chronological monthly continuity report whose discussions, changed decisions, completed work, and outstanding work trace back to the correct source meeting.
+17. An uncertain recurring-series match remains outside the report until confirmed, and the next-meeting brief contains no unsupported recommendation presented as fact.
+18. Unverified and rejected product signals do not change Voice of Customer counts, while repeated mentions from one client increase mentions but not distinct-client count.
+19. A reviewed cluster creates one Product Opportunity, authorized status changes are audited, and its current state appears in the relevant next-meeting brief.
+20. Duplicate export attempts reconcile to one external issue, and no model or background worker can create roadmap work automatically.
 
 Use sanitized or synthetic transcripts in automated suites. Real-account smoke tests require explicit test accounts, approved data, cleanup instructions, and must never target real clients.
 

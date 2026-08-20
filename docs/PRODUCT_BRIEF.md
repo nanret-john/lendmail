@@ -98,6 +98,18 @@ The scope is confined to note capture, client and style resolution, LLM based ex
 
 * Give admins a global style library, client records, and a queue of meetings flagged as needing a client tag, without giving them default visibility into anyone's mail content.
 
+**Client Voice and product intelligence**
+
+* Extract potential feature requests, pain points, product friction, confusing workflows, competitor mentions, and churn indicators as separately reviewable product signals alongside the meeting note.
+
+* Require a human to verify a signal before it contributes to cross-client reporting. Keep explicit client statements separate from model inference and never let the model decide roadmap priority.
+
+* Cluster verified signals across distinct clients and meetings into a Voice of Customer report showing frequency, client impact, recurrence, first/latest mention, related commitments, and minimal approved evidence excerpts.
+
+* Let an authorized Product user convert a verified cluster into a Product Opportunity with a human-controlled lifecycle: New, Investigating, Planned, In progress, and Resolved. Future issue-tracker export remains a reviewed action, never automatic.
+
+* Bring the current Product Opportunity status back into the next-meeting preparation brief so client-facing teams can close the feedback loop.
+
 **Rollout**
 
 * Prove capture end to end against one connected account before building client resolution, style resolution, or extraction on top of it.
@@ -257,4 +269,3 @@ This is the build order end to end. Everything after Phase 1 depends on at least
 8. Phase 7, the portal: build connect and disconnect as the entry screen, then the meetings view, personal style management, and admin views.
 
 9. Phase 8, hardening and demo: add retry and reconnection handling, run the scenarios that matter most, and demo a real recent meeting within the review time target.
-
